@@ -1,12 +1,14 @@
+
 /********************************
  * ADOBE DATA LAYER – SHOPEZE
  ********************************/
-window.adobeData = window.adobeData || {};
-window.adobeData.page = window.adobeData.page || {};
-window.adobeData.product = window.adobeData.product || {};
-window.adobeData.cart = window.adobeData.cart || {};
-window.adobeData.transaction = window.adobeData.transaction || {};
-window.adobeData.event = window.adobeData.event || {};
+window.adobeDataLayer = window.adobeDataLayer || {};
+window.adobeDataLayer.page = window.adobeDataLayer.page || {};
+window.adobeDataLayer.product = window.adobeDataLayer.product || {};
+window.adobeDataLayer.cart = window.adobeDataLayer.cart || {};
+window.adobeDataLayer.transaction = window.adobeDataLayer.transaction || {};
+window.adobeDataLayer.event = window.adobeDataLayer.event || {};
+
 
 /* ---------- PAGE DATA LAYER ---------- */
 function setPageDL() {
@@ -60,14 +62,14 @@ function setPageDL() {
     }
   };
 
-  window.adobeData.page = pageMap[page] || {};
+  window.adobeDataLayer.page = pageMap[page] || {};
 }
 
 /* ---------- PRODUCT DATA LAYER (PDP) ---------- */
 function setProductDL(prod) {
   if (!prod) return;
 
-  window.adobeData.product = {
+  window.adobeDataLayer.product = {
     id: prod.id,
     name: prod.title,
     price: prod.price,
@@ -78,7 +80,7 @@ function setProductDL(prod) {
 
 /* ---------- CART DATA LAYER ---------- */
 function setCartDL(cart) {
-  window.adobeData.cart = {
+  window.adobeDataLayer.cart = {
     itemCount: cart.reduce((s, i) => s + i.qty, 0),
     totalAmount: cart.reduce((s, i) => s + i.qty * i.price, 0),
     products: cart.map(i => ({
@@ -92,7 +94,7 @@ function setCartDL(cart) {
 
 /* ---------- ADD TO CART EVENT ---------- */
 function fireAddToCart(prod, qty) {
-  window.adobeData.event = {
+  window.adobeDataLayer.event = {
     name: "addToCart",
     product: {
       id: prod.id,
@@ -109,7 +111,7 @@ function fireAddToCart(prod, qty) {
 
 /* ---------- PURCHASE EVENT ---------- */
 function firePurchase(order) {
-  window.adobeData.transaction = {
+  window.adobeDataLayer.transaction = {
     orderId: order.id,
     revenue: order.total,
     products: order.items.map(i => ({
@@ -543,5 +545,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 });
+
 
 
