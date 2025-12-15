@@ -504,7 +504,7 @@ dots.forEach((dot, idx) => {
 /********************************
  * CALL DATA LAYER AT RIGHT TIME
  ********************************/
-setPageDL();
+
 document.addEventListener("DOMContentLoaded", function () {
 
   /* 1️⃣ PAGE DATA LAYER (ALL PAGES) */
@@ -543,4 +543,5 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 });
+
 
