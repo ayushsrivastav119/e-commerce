@@ -1,3 +1,163 @@
+/********************************
+ * ADOBE DATA LAYER – SHOPEZE
+ ********************************/
+window.adobeData = window.adobeData || {};
+window.adobeData.page = window.adobeData.page || {};
+window.adobeData.product = window.adobeData.product || {};
+window.adobeData.cart = window.adobeData.cart || {};
+window.adobeData.transaction = window.adobeData.transaction || {};
+window.adobeData.event = window.adobeData.event || {};
+
+/* ---------- PAGE DATA LAYER ---------- */
+function setPageDL() {
+  const page = document.body.dataset.page;
+
+  const pageMap = {
+    home: {
+      pageName: "Home",
+      pageType: "home",
+      siteSection: "Homepage"
+    },
+    plp: {
+      pageName: "Product Listing",
+      pageType: "plp",
+      siteSection: "Products"
+    },
+    pdp: {
+      pageName: "Product Detail",
+      pageType: "pdp",
+      siteSection: "Products"
+    },
+    cart: {
+      pageName: "Cart",
+      pageType: "cart",
+      siteSection: "Checkout"
+    },
+    checkout: {
+      pageName: "Checkout",
+      pageType: "checkout",
+      siteSection: "Checkout"
+    },
+    "payment-method": {
+      pageName: "Payment Method",
+      pageType: "payment_method",
+      siteSection: "Checkout"
+    },
+    payment: {
+      pageName: "Payment",
+      pageType: "payment",
+      siteSection: "Checkout"
+    },
+    processing: {
+      pageName: "Processing",
+      pageType: "processing",
+      siteSection: "Checkout"
+    },
+    thankyou: {
+      pageName: "Thank You",
+      pageType: "thankyou",
+      siteSection: "Checkout"
+    }
+  };
+
+  window.adobeData.page = pageMap[page] || {};
+}
+
+/* ---------- PRODUCT DATA LAYER (PDP) ---------- */
+function setProductDL(prod) {
+  if (!prod) return;
+
+  window.adobeData.product = {
+    id: prod.id,
+    name: prod.title,
+    price: prod.price,
+    sku: prod.sku,
+    category: "General"
+  };
+}
+
+/* ---------- CART DATA LAYER ---------- */
+function setCartDL(cart) {
+  window.adobeData.cart = {
+    itemCount: cart.reduce((s, i) => s + i.qty, 0),
+    totalAmount: cart.reduce((s, i) => s + i.qty * i.price, 0),
+    products: cart.map(i => ({
+      id: i.id,
+      name: i.title,
+      price: i.price,
+      quantity: i.qty
+    }))
+  };
+}
+
+/* ---------- ADD TO CART EVENT ---------- */
+function fireAddToCart(prod, qty) {
+  window.adobeData.event = {
+    name: "addToCart",
+    product: {
+      id: prod.id,
+      name: prod.title,
+      price: prod.price,
+      quantity: qty
+    }
+  };
+
+  if (window._satellite) {
+    _satellite.track("addToCart");
+  }
+}
+
+/* ---------- PURCHASE EVENT ---------- */
+function firePurchase(order) {
+  window.adobeData.transaction = {
+    orderId: order.id,
+    revenue: order.total,
+    products: order.items.map(i => ({
+      id: i.id,
+      name: i.title,
+      price: i.price,
+      quantity: i.qty
+    }))
+  };
+
+  if (window._satellite) {
+    _satellite.track("purchase");
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* app.js - shared by all pages
    Single source of truth: PRODUCTS list + cart & order functions.
    Pages detect their role by body[data-page].
@@ -42,7 +202,7 @@ const CART_KEY = 'mini_cart_v2';
 const ORDER_KEY = 'mini_last_order_v2';
 
 function getCart(){ try{return JSON.parse(localStorage.getItem(CART_KEY))||[]}catch(e){return []} }
-function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); updateCartCount(); }
+function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); updateCartCount(); srtCartDl(c); }
 function clearCart(){ localStorage.removeItem(CART_KEY); updateCartCount(); }
 
 function updateCartCount(){
@@ -82,12 +242,21 @@ function renderPLP(){
 function quickAdd(id){
   const prod = PRODUCTS.find(p=>p.id===id);
   if(!prod) return;
+
   const cart = getCart();
   const found = cart.find(i=>i.id===id);
-  if(found) found.qty += 1; else cart.push({id:prod.id, title:prod.title, price:prod.price, img:prod.img, qty:1});
+
+  if(found) found.qty += 1; 
+  else cart.push({id:prod.id, title:prod.title, price:prod.price, img:prod.img, qty:1});
+
   saveCart(cart);
+
+  /* 🔥 ADOBE ADD TO CART EVENT */
+  fireAddToCart(prod, 1);
+
   alert('Added to cart');
 }
+
 
 /* PAGE: PDP */
 function renderPDP(){
@@ -109,14 +278,21 @@ function renderPDP(){
   document.getElementById('decQty').onclick = ()=>{ qtyInput.value = Math.max(1, Number(qtyInput.value||1)-1); };
 
   document.getElementById('addToCartBtn').onclick = ()=>{
-    const qty = Math.max(1, Number(qtyInput.value||1));
-    const cart = getCart();
-    const found = cart.find(i=>i.id===prod.id);
-    if(found) found.qty += qty; else cart.push({ id:prod.id, title:prod.title, price:prod.price, img:prod.img, qty });
-    saveCart(cart);
-    // as requested: on add-to-cart go to cart page
-    window.location = 'cart.html';
-  };
+  const qty = Math.max(1, Number(qtyInput.value||1));
+  const cart = getCart();
+  const found = cart.find(i=>i.id===prod.id);
+
+  if(found) found.qty += qty; 
+  else cart.push({ id:prod.id, title:prod.title, price:prod.price, img:prod.img, qty });
+
+  saveCart(cart);
+
+  /* 🔥 ADOBE ADD TO CART EVENT */
+  fireAddToCart(prod, qty);
+
+  window.location = 'cart.html';
+};
+
 }
 
 /* PAGE: CART */
@@ -321,4 +497,50 @@ dots.forEach((dot, idx) => {
   dot.addEventListener("click", () => showSlide(idx));
 });
 
+
+
+
+
+/********************************
+ * CALL DATA LAYER AT RIGHT TIME
+ ********************************/
+setPageDL();
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* 1️⃣ PAGE DATA LAYER (ALL PAGES) */
+  setPageDL();
+
+  const page = document.body.dataset.page;
+
+  /* 2️⃣ PDP – PRODUCT DATA */
+  if (page === "pdp") {
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get("id");
+    if (window.PRODUCTS && id) {
+      const prod = PRODUCTS.find(p => p.id === id);
+      if (prod) {
+        setProductDL(prod);
+      }
+    }
+  }
+
+  /* 3️⃣ CART PAGE – CART DATA */
+  if (page === "cart") {
+    const cart = JSON.parse(localStorage.getItem("mini_cart_v2") || "[]");
+    setCartDL(cart);
+  }
+
+  /* 4️⃣ THANK YOU PAGE – PURCHASE EVENT */
+  if (page === "thankyou") {
+    const order = JSON.parse(sessionStorage.getItem("mini_last_order_v2") || "null");
+    const fired = sessionStorage.getItem("purchase_fired");
+
+    /* 🔥 FIX 4: Prevent duplicate purchase */
+    if (order && !fired) {
+      firePurchase(order);
+      sessionStorage.setItem("purchase_fired", "yes");
+    }
+  }
+
+});
 
