@@ -1,13 +1,20 @@
 
 /********************************
- * ADOBE DATA LAYER – SHOPEZE
+ * ADOBE DATA LAYER – STANDARD TEMPLATE (REUSABLE)
  ********************************/
-window.adobeDataLayer = window.adobeDataLayer || {};
-window.adobeDataLayer.page = window.adobeDataLayer.page || {};
-window.adobeDataLayer.product = window.adobeDataLayer.product || {};
-window.adobeDataLayer.cart = window.adobeDataLayer.cart || {};
-window.adobeDataLayer.transaction = window.adobeDataLayer.transaction || {};
-window.adobeDataLayer.event = window.adobeDataLayer.event || {};
+// Global initialization is in <head> of HTML files
+window.adobeDataLayer = window.adobeDataLayer || [];
+console.log('Data layer initialized:', window.adobeDataLayer);
+
+// 2️⃣ Common objects (used in EVERY event)
+// Customer Object (guest by default)
+var custData = {
+  custId: "",                // logged-in user id
+  emailID_plain: "",         // email if available
+  mobileNo_plain: "",        // mobile number
+  loginStatus: "guest",      // guest | logged_in
+  loginMethod: ""            // email | google | otp etc.
+};
 
 
 /* ---------- PAGE DATA LAYER ---------- */
@@ -16,93 +23,164 @@ function setPageDL() {
 
   const pageMap = {
     home: {
-      pageName: "Home",
-      pageType: "home",
-      siteSection: "Homepage"
+      name: "Home Page",
+      type: "home"
     },
     plp: {
-      pageName: "Product Listing",
-      pageType: "plp",
-      siteSection: "Products"
+      name: "Product Listing",
+      type: "plp"
     },
     pdp: {
-      pageName: "Product Detail",
-      pageType: "pdp",
-      siteSection: "Products"
+      name: "Product Detail",
+      type: "pdp"
     },
     cart: {
-      pageName: "Cart",
-      pageType: "cart",
-      siteSection: "Checkout"
+      name: "Cart",
+      type: "cart"
     },
     checkout: {
-      pageName: "Checkout",
-      pageType: "checkout",
-      siteSection: "Checkout"
+      name: "Checkout",
+      type: "checkout"
     },
     "payment-method": {
-      pageName: "Payment Method",
-      pageType: "payment_method",
-      siteSection: "Checkout"
+      name: "Payment Method",
+      type: "payment_method"
     },
     payment: {
-      pageName: "Payment",
-      pageType: "payment",
-      siteSection: "Checkout"
+      name: "Payment",
+      type: "payment"
     },
     processing: {
-      pageName: "Processing",
-      pageType: "processing",
-      siteSection: "Checkout"
+      name: "Processing",
+      type: "processing"
     },
     thankyou: {
-      pageName: "Thank You",
-      pageType: "thankyou",
-      siteSection: "Checkout"
+      name: "Thank You",
+      type: "thankyou"
     }
   };
 
-  window.adobeDataLayer.page = pageMap[page] || {};
+  const pageData = pageMap[page] || {};
+
+  // 3️⃣ Page View Event (ALL pages)
+  window.adobeDataLayer.push({
+    event: "pageView",
+    custData: custData,
+    page: {
+      name: pageData.name,
+      type: pageData.type,
+      url: window.location.href,
+      referrer: document.referrer || ""
+    }
+  });
 }
 
 /* ---------- PRODUCT DATA LAYER (PDP) ---------- */
 function setProductDL(prod) {
   if (!prod) return;
 
-  window.adobeDataLayer.product = {
-    id: prod.id,
-    name: prod.title,
-    price: prod.price,
-    sku: prod.sku,
-    category: "General"
-  };
+  // 5️⃣ Product Detail View (PDP)
+  window.adobeDataLayer.push({
+    event: "productDetail",
+    custData: custData,
+    product: [{
+      productId: prod.id,
+      name: prod.title,
+      brand: "MyBrand",  // Assuming a default brand, can be updated
+      category: "General",  // Can be updated based on product
+      price: prod.price,
+      color: "",  // Add if available
+      size: ""    // Add if available
+    }]
+  });
 }
 
 /* ---------- CART DATA LAYER ---------- */
 function setCartDL(cart) {
-  window.adobeDataLayer.cart = {
-    itemCount: cart.reduce((s, i) => s + i.qty, 0),
-    totalAmount: cart.reduce((s, i) => s + i.qty * i.price, 0),
-    products: cart.map(i => ({
-      id: i.id,
-      name: i.title,
-      price: i.price,
-      quantity: i.qty
-    }))
-  };
+  const page = document.body.dataset.page;
+
+  const cartItems = cart.map(i => ({
+    productId: i.id,
+    name: i.title,
+    price: i.price,
+    quantity: i.qty
+  }));
+
+  const totalQuantity = cart.reduce((s, i) => s + i.qty, 0);
+  const totalValue = cart.reduce((s, i) => s + i.qty * i.price, 0);
+
+  if (page === "cart") {
+    // 8️⃣ Cart View (scView)
+    window.adobeDataLayer.push({
+      event: "scView",
+      custData: custData,
+      cart: {
+        items: cartItems,
+        totalQuantity: totalQuantity,
+        totalValue: totalValue,
+        currency: "INR"
+      }
+    });
+  } else if (page === "checkout") {
+    // 9️⃣ Checkout (scCheckout)
+    window.adobeDataLayer.push({
+      event: "scCheckout",
+      custData: custData,
+      cart: {
+        items: cartItems,
+        totalQuantity: totalQuantity,
+        totalValue: totalValue,
+        currency: "INR"
+      }
+    });
+  }
 }
 
-/* ---------- ADD TO CART EVENT ---------- */
+/* ---------- PRODUCT CLICK EVENT ---------- */
+function fireProductClick(prodId, position) {
+  const prod = PRODUCTS.find(p => p.id === prodId);
+  if (!prod) return;
+
+  // 6️⃣ Product Click (PLP → PDP)
+  window.adobeDataLayer.push({
+    event: "productClick",
+    custData: custData,
+    eventInfo: {
+      eventName: "productClick",
+      component: "plp_tile"
+    },
+    product: [{
+      productId: prod.id,
+      name: prod.title,
+      price: prod.price,
+      position: position,
+      list: "PLP"
+    }]
+  });
+}
 function fireAddToCart(prod, qty) {
-  window.adobeDataLayer.event = {
-    name: "addToCart",
-    product: {
-      id: prod.id,
+  // 7️⃣ Add to Cart (scAdd)
+  window.adobeDataLayer.push({
+    event: "scAdd",
+    custData: custData,
+    product: [{
+      productId: prod.id,
       name: prod.title,
       price: prod.price,
       quantity: qty
+    }],
+    cart: {
+      items: [{
+        productId: prod.id,
+        name: prod.title,
+        price: prod.price,
+        quantity: qty
+      }],
+      totalQuantity: qty,  // For simplicity, assuming this is the only item, but can be updated
+      totalValue: prod.price * qty,
+      currency: "INR"
     }
-  };
+  });
 
   if (window._satellite) {
     _satellite.track("addToCart");
@@ -111,16 +189,37 @@ function fireAddToCart(prod, qty) {
 
 /* ---------- PURCHASE EVENT ---------- */
 function firePurchase(order) {
-  window.adobeDataLayer.transaction = {
-    orderId: order.id,
-    revenue: order.total,
-    products: order.items.map(i => ({
-      id: i.id,
-      name: i.title,
-      price: i.price,
-      quantity: i.qty
-    }))
-  };
+  // 🔟 Purchase (Thank You Page)
+  window.adobeDataLayer.push({
+    event: "purchase",
+    custData: custData,
+    order: {
+      orderId: order.id,
+      currency: "INR",
+      revenue: order.total,
+      tax: 0,
+      shipping: 0,
+      discount: 0
+    },
+    cart: {
+      items: order.items.map(i => ({
+        productId: i.id,
+        name: i.title,
+        price: i.price,
+        quantity: i.qty
+      })),
+      totalQuantity: order.items.reduce((s, i) => s + i.qty, 0),
+      totalValue: order.total,
+      currency: "INR"
+    },
+    shipping: {
+      firstName: "",  // Add if available
+      lastName: "",
+      city: "",
+      state: "",
+      country: "India"
+    }
+  });
 
   if (window._satellite) {
     _satellite.track("purchase");
@@ -224,7 +323,7 @@ function renderPLP(){
   const root = document.getElementById('productsGrid');
   if(!root) return;
   root.innerHTML = '';
-  PRODUCTS.forEach(p=>{
+  PRODUCTS.forEach((p, index)=>{
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
@@ -233,11 +332,32 @@ function renderPLP(){
       <div class="muted">${p.sku}</div>
       <div class="price">₹${p.price.toLocaleString()}</div>
       <div style="margin-top:8px;">
-        <a class="btn " href="pdp.html?id=${encodeURIComponent(p.id)}">View</a>
+        <a class="btn " href="pdp.html?id=${encodeURIComponent(p.id)}" onclick="fireProductClick('${p.id}', ${index + 1})">View</a>
         <button class="btn-ghost " onclick="quickAdd('${p.id}')">Add</button>
       </div>
     `;
     root.appendChild(card);
+  });
+
+  // 4️⃣ Product Impression (PLP)
+  const products = PRODUCTS.map((p, index) => ({
+    productId: p.id,
+    name: p.title,
+    brand: "MyBrand",
+    category: "General",
+    price: p.price,
+    position: index + 1,
+    list: "PLP"
+  }));
+
+  window.adobeDataLayer.push({
+    event: "productImpression",
+    custData: custData,
+    page: {
+      name: "Product Listing",
+      type: "plp"
+    },
+    products: products
   });
 }
 
@@ -253,8 +373,8 @@ function quickAdd(id){
 
   saveCart(cart);
 
-  /* 🔥 ADOBE ADD TO CART EVENT */
-  fireAddToCart(prod, 1);
+  // /* 🔥 ADOBE ADD TO CART EVENT */
+   fireAddToCart(prod, 1);
 
   alert('Added to cart');
 }
@@ -482,22 +602,24 @@ const slides = document.querySelectorAll(".slide");
 const dots = document.querySelectorAll(".dot");
 const slidesContainer = document.querySelector(".slides");
 
-function showSlide(index) {
-  if (index < 0) index = slides.length - 1;
-  if (index >= slides.length) index = 0;
-  currentSlide = index;
-  slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
-  dots.forEach((dot) => dot.classList.remove("active"));
-  dots[currentSlide].classList.add("active");
+if (slidesContainer) {
+  function showSlide(index) {
+    if (index < 0) index = slides.length - 1;
+    if (index >= slides.length) index = 0;
+    currentSlide = index;
+    slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
+    dots.forEach((dot) => dot.classList.remove("active"));
+    dots[currentSlide].classList.add("active");
+  }
+
+  setInterval(() => {
+    showSlide(currentSlide + 1);
+  }, 4000);
+
+  dots.forEach((dot, idx) => {
+    dot.addEventListener("click", () => showSlide(idx));
+  });
 }
-
-setInterval(() => {
-  showSlide(currentSlide + 1);
-}, 4000);
-
-dots.forEach((dot, idx) => {
-  dot.addEventListener("click", () => showSlide(idx));
-});
 
 
 
@@ -518,7 +640,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (page === "pdp") {
     const url = new URL(window.location.href);
     const id = url.searchParams.get("id");
-    if (window.PRODUCTS && id) {
+    if (PRODUCTS && id) {
       const prod = PRODUCTS.find(p => p.id === id);
       if (prod) {
         setProductDL(prod);
@@ -528,6 +650,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* 3️⃣ CART PAGE – CART DATA */
   if (page === "cart") {
+    const cart = JSON.parse(localStorage.getItem("mini_cart_v2") || "[]");
+    setCartDL(cart);
+  }
+
+  /* 3.5️⃣ CHECKOUT PAGE – CART DATA */
+  if (page === "checkout") {
     const cart = JSON.parse(localStorage.getItem("mini_cart_v2") || "[]");
     setCartDL(cart);
   }
@@ -545,6 +673,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 });
+
 
 
 
