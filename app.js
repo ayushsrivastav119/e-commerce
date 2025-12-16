@@ -577,6 +577,14 @@ function renderThankyou(){
   if(el) el.textContent = order.id;
   const summary = document.getElementById('thankSummary');
   if(summary) summary.textContent = `Order total: ₹${order.total.toLocaleString()}. A confirmation has been sent to ${order.email || 'your email'}.`;
+
+  // Fire purchase event before removing order
+  const fired = sessionStorage.getItem("purchase_fired");
+  if (!fired) {
+    firePurchase(order);
+    sessionStorage.setItem("purchase_fired", "yes");
+  }
+
   // remove last order from session if you want persistence cleared:
   sessionStorage.removeItem(ORDER_KEY);
 }
@@ -658,18 +666,6 @@ document.addEventListener("DOMContentLoaded", function () {
   if (page === "checkout") {
     const cart = JSON.parse(localStorage.getItem("mini_cart_v2") || "[]");
     setCartDL(cart);
-  }
-
-  /* 4️⃣ THANK YOU PAGE – PURCHASE EVENT */
-  if (page === "thankyou") {
-    const order = JSON.parse(sessionStorage.getItem("mini_last_order_v2") || "null");
-    const fired = sessionStorage.getItem("purchase_fired");
-
-    /* 🔥 FIX 4: Prevent duplicate purchase */
-    if (order && !fired) {
-      firePurchase(order);
-      sessionStorage.setItem("purchase_fired", "yes");
-    }
   }
 
 });
