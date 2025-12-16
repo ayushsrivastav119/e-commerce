@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shopeze — pdp</title>
+  <title>MyShop — Product</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- Adobe Data Layer Initialization -->
   <script>window.adobeDataLayer = window.adobeDataLayer || [];</script>
   <script src="https://assets.adobedtm.com/21b53c73144b/f11fc3055b35/launch-1ad17d956564-development.min.js" async></script>
 </head>
-<body data-page="plp">
+<body data-page="pdp">
   <header>
     
     <div class="wrap">
@@ -38,10 +38,47 @@
 </header>
 
   <main class="wrap">
-    <h2>Products</h2>
-    <div id="productsGrid" class="grid"></div>
+    <a class="btn-ghost" href="plp.html">← Back to Products</a>
+
+    <div class="card product-detail" id="pdpCard">
+     <img
+  id="pdpImage"
+  src=""
+  alt="product image"
+  style="
+    width:400px;
+    height:400px;
+    max-height:400px;
+    min-height:400px;
+    object-fit:cover;
+    border-radius:12px;
+    display:block;
+  "
+>
+
+      <div class="pdp-info">
+        <h2 id="pdpTitle">Product title</h2>
+        <div class="muted" id="pdpSku">SKU</div>
+        <div class="price" id="pdpPrice">₹0</div>
+        <p id="pdpDesc">Description</p>
+
+        <div class="qty-row">
+          <label>Quantity</label>
+          <div class="qty-control">
+            <button id="decQty">−</button>
+            <input id="pdpQty" value="1" min="1" type="number">
+            <button id="incQty">+</button>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <button id="addToCartBtn" class="btn">Add to cart</button>
+          <a class="btn-ghost" href="cart.html" style="margin-left:10px">View cart</a>
+        </div>
+      </div>
+    </div>
   </main>
-  <footer class="footer-dark">
+   <footer class="footer-dark">
   <div class="footer-container">
 
     <div class="footer-col brand">
@@ -93,6 +130,7 @@
     © 2025 <span>Shopeze</span>. All Rights Reserved.
   </div>
 </footer>
+
 
   <script src="app.js"></script>
 </body>
