@@ -338,27 +338,6 @@ function renderPLP(){
     `;
     root.appendChild(card);
   });
-
-  // 4️⃣ Product Impression (PLP)
-  const products = PRODUCTS.map((p, index) => ({
-    productId: p.id,
-    name: p.title,
-    brand: "MyBrand",
-    category: "General",
-    price: p.price,
-    position: index + 1,
-    list: "PLP"
-  }));
-
-  window.adobeDataLayer.push({
-    event: "productImpression",
-    custData: custData,
-    page: {
-      name: "Product Listing",
-      type: "plp"
-    },
-    products: products
-  });
 }
 
 function quickAdd(id){
@@ -578,12 +557,8 @@ function renderThankyou(){
   const summary = document.getElementById('thankSummary');
   if(summary) summary.textContent = `Order total: ₹${order.total.toLocaleString()}. A confirmation has been sent to ${order.email || 'your email'}.`;
 
-  // Fire purchase event before removing order
-  const fired = sessionStorage.getItem("purchase_fired");
-  if (!fired) {
-    firePurchase(order);
-    sessionStorage.setItem("purchase_fired", "yes");
-  }
+  // Fire purchase event
+  firePurchase(order);
 
   // remove last order from session if you want persistence cleared:
   sessionStorage.removeItem(ORDER_KEY);
@@ -592,6 +567,7 @@ function renderThankyou(){
 /* On load: detect page and run renderers */
 (function init(){
   updateCartCount();
+  setPageDL();  // Push pageView first
   const page = document.body.dataset.page;
   if(page === 'plp') renderPLP();
   else if(page === 'pdp') renderPDP();
@@ -639,9 +615,6 @@ if (slidesContainer) {
 
 document.addEventListener("DOMContentLoaded", function () {
 
-  /* 1️⃣ PAGE DATA LAYER (ALL PAGES) */
-  setPageDL();
-
   const page = document.body.dataset.page;
 
   /* 2️⃣ PDP – PRODUCT DATA */
@@ -668,8 +641,30 @@ document.addEventListener("DOMContentLoaded", function () {
     setCartDL(cart);
   }
 
-});
+  /* 4️⃣ PLP – PRODUCT IMPRESSION */
+  if (page === "plp") {
+    const products = PRODUCTS.map((p, index) => ({
+      productId: p.id,
+      name: p.title,
+      brand: "MyBrand",
+      category: "General",
+      price: p.price,
+      position: index + 1,
+      list: "PLP"
+    }));
 
+    window.adobeDataLayer.push({
+      event: "productImpression",
+      custData: custData,
+      page: {
+        name: "Product Listing",
+        type: "plp"
+      },
+      products: products
+    });
+  }
+
+});
 
 
 
